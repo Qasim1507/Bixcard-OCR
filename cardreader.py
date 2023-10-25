@@ -8,7 +8,6 @@ import re
 import mysql.connector
 import io
 
-
 # connect the database
 mydb=mysql.connector.connect(
     user='root',
@@ -24,9 +23,8 @@ icon = Image.open("samcomhanwha.png")
 
 st.set_page_config(page_icon= icon,
                    layout="wide",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="collapsed")
 st.markdown("<h1 style='color: red;'>Business card DB</h1>", unsafe_allow_html=True)
-
 
 def setting_bg():
     st.markdown(f""" <style>.stApp {{
@@ -68,7 +66,7 @@ def extracted_text(picture):
             small = result[m].lower()
             ext_dic['Website'].append(small)
 
-        elif 'Dubai' in result[m] or 'UAE' in result[m] or result[m].isdigit():
+        elif result[m].isdigit():
             ext_dic['Pincode'].append(result[m])
 
         elif re.match(r'^[A-Za-z]', result[m]):
@@ -87,7 +85,6 @@ def extracted_text(picture):
             ext_dic[key] = [value]
 
     return ext_dic
-
 
 if selected == "Image":
     image = st.file_uploader(label="Upload the image", type=['png', 'jpg', 'jpeg'], label_visibility="hidden")
@@ -189,22 +186,22 @@ if selected == "Image":
                     names.append(i[0])
                 name_selected = st.selectbox("Select the name to delete", options=names)
                 # st.write(name_selected)
-            with col2:
-                mycursor.execute(f"SELECT DESIGNATION FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
-                Z = mycursor.fetchall()
-                designation = ["Select"]
-                for j in Z:
-                    designation.append(j[0])
-                designation_selected = st.selectbox("Select the designation of the chosen name", options=designation)
+            # with col2:
+            #     mycursor.execute(f"SELECT DESIGNATION FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
+            #     Z = mycursor.fetchall()
+            #     designation = ["Select"]
+            #     for j in Z:
+            #         designation.append(j[0])
+            #     designation_selected = st.selectbox("Select the designation of the chosen name", options=designation)
 
             st.markdown(" ")
 
             col_a, col_b, col_c = st.columns([5, 3, 3])
             with col_b:
-                remove = st.button("Clik here to delete")
-            if name_selected and designation_selected and remove:
+                remove = st.button("Click here to delete")
+            if name_selected and remove:
                 mycursor.execute(
-                    f"DELETE FROM BUSINESS_CARD WHERE NAME = '{name_selected}' AND DESIGNATION = '{designation_selected}'")
+                    f"DELETE FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
                 mydb.commit()
                 if remove:
                     st.warning('DELETED', icon="⚠️")
@@ -222,9 +219,25 @@ if selected == "Home":
 
     # Fetch data from the database
     table_data = fetch_data()
-    
+
     if not table_data.empty:
-        st.write("Data in the Business Card Table:")
+        col1, col2 = st.columns([4, 4])
+        with col1:
+            mycursor.execute("SELECT NAME FROM BUSINESS_CARD")
+            Y = mycursor.fetchall()
+            names = ["Select"]
+            for i in Y:
+                names.append(i[0])
+            name_selected = st.selectbox("Select the name to delete", options=names)
+        with col2:
+            remove = st.button("Click here to delete")
+            if name_selected and remove:
+                mycursor.execute(
+                    f"DELETE FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
+                mydb.commit()
+                if remove:
+                    st.warning('DELETED', icon="⚠️")
+        st.write("Business Card Data:")
         st.dataframe(table_data)
     else:
         empty_text = "The Business Card Table is empty."
