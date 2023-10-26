@@ -1,3 +1,5 @@
+import requests
+import json
 import streamlit as st
 from streamlit_option_menu import option_menu
 import easyocr
@@ -5,16 +7,24 @@ from PIL import Image
 import pandas as pd
 import numpy as np
 import re
-import mysql.connector
+import pymysql
 import io
 
-# connect the database
-mydb=mysql.connector.connect(
-    user='root',
-    host='localhost',
-    password='tiger')
+timeout = 10
+connection = pymysql.connect(
+  charset="utf8mb4",
+  connect_timeout=timeout,
+  cursorclass=pymysql.cursors.DictCursor,
+  db="defaultdb",
+  host="mysql-1524592a-nalawalaq-9e21.a.aivencloud.com",
+  password="AVNS_tVvWsWLpl91AiK4_UQr",
+  read_timeout=timeout,
+  port=22499,
+  user="avnadmin",
+  write_timeout=timeout,
+)
 
-mycursor=mydb.cursor()
+mycursor=connection.cursor()
 mycursor.execute('CREATE DATABASE if not exists bizcardx_db')
 mycursor.execute('Use bizcardx_db')
 
@@ -125,8 +135,8 @@ if selected == "Image":
         with col2:
             selected = option_menu(
                 menu_title=None,
-                options=["Preview", "Delete"],
-                icons=['file-earmark', 'trash'],
+                options=["Preview"],
+                icons=['file-earmark'],
                 default_index=0,
                 orientation="horizontal"
             )
@@ -165,16 +175,16 @@ if selected == "Image":
             if Upload:
                 with st.spinner("In progress"):
                     mycursor.execute(
-                        "CREATE TABLE IF NOT EXISTS BUSINESS_CARD(NAME VARCHAR(50), DESIGNATION VARCHAR(100), "
+                        "CREATE TABLE IF NOT EXISTS BUSINESS_CARD(ID INT AUTO_INCREMENT PRIMARY KEY, NAME VARCHAR(50), DESIGNATION VARCHAR(100), "
                         "COMPANY_NAME VARCHAR(100), CONTACT VARCHAR(35), EMAIL VARCHAR(100), WEBSITE VARCHAR("
                         "100), ADDRESS TEXT, PINCODE VARCHAR(100))")
-                    mydb.commit()
+                    connection.commit()
                     A = "INSERT INTO BUSINESS_CARD(NAME, DESIGNATION, COMPANY_NAME, CONTACT, EMAIL, WEBSITE, ADDRESS, " \
                         "PINCODE) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
                     for index, i in concat_df.iterrows():
                         result_table = (i[0], i[1], i[2], i[3], i[4], i[5], i[6], i[7])
                         mycursor.execute(A, result_table)
-                        mydb.commit()
+                        connection.commit()
                         st.success('SUCCESSFULLY UPLOADED', icon="✅")
         else:
             col1, col2 = st.columns([4, 4])
@@ -183,17 +193,8 @@ if selected == "Image":
                 Y = mycursor.fetchall()
                 names = ["Select"]
                 for i in Y:
-                    names.append(i[0])
+                    names.append(i['NAME'])
                 name_selected = st.selectbox("Select the name to delete", options=names)
-                # st.write(name_selected)
-            # with col2:
-            #     mycursor.execute(f"SELECT DESIGNATION FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
-            #     Z = mycursor.fetchall()
-            #     designation = ["Select"]
-            #     for j in Z:
-            #         designation.append(j[0])
-            #     designation_selected = st.selectbox("Select the designation of the chosen name", options=designation)
-
             st.markdown(" ")
 
             col_a, col_b, col_c = st.columns([5, 3, 3])
@@ -202,14 +203,14 @@ if selected == "Image":
             if name_selected and remove:
                 mycursor.execute(
                     f"DELETE FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
-                mydb.commit()
+                connection.commit()
                 if remove:
                     st.warning('DELETED', icon="⚠️")
 
     else:
         st.write("Upload an image")
 def fetch_data():
-    mycursor.execute("SELECT * FROM BUSINESS_CARD")
+    mycursor.execute("SELECT NAME, DESIGNATION, COMPANY_NAME, CONTACT, EMAIL, WEBSITE, ADDRESS, PINCODE FROM BUSINESS_CARD")
     data = mycursor.fetchall()
     column_names = [i[0] for i in mycursor.description]
     df = pd.DataFrame(data, columns=column_names)
@@ -219,7 +220,8 @@ if selected == "Home":
 
     # Fetch data from the database
     table_data = fetch_data()
-
+    st.write("Business Card Data:")
+    st.dataframe(table_data)
     if not table_data.empty:
         col1, col2 = st.columns([4, 4])
         with col1:
@@ -227,22 +229,20 @@ if selected == "Home":
             Y = mycursor.fetchall()
             names = ["Select"]
             for i in Y:
-                names.append(i[0])
+                names.append(i['NAME'])
             name_selected = st.selectbox("Select the name to delete", options=names)
         with col2:
             remove = st.button("Click here to delete")
             if name_selected and remove:
                 mycursor.execute(
                     f"DELETE FROM BUSINESS_CARD WHERE NAME = '{name_selected}'")
-                mydb.commit()
+                connection.commit()
                 if remove:
                     st.warning('DELETED', icon="⚠️")
-        st.write("Business Card Data:")
-        st.dataframe(table_data)
     else:
         empty_text = "The Business Card Table is empty."
         st.markdown(f'<p style="color: red; font-size: 20px;">{empty_text}</p>', unsafe_allow_html=True)
 
 # Close the database connection when you're done
 mycursor.close()
-mydb.close()
+connection.close()
