@@ -100,7 +100,7 @@ if selected == "Image":
     image = st.file_uploader(label="Upload the image", type=['png', 'jpg', 'jpeg'],)
 
 
-    @st.cache_data
+    # @st.cache_data
     def load_image():
         reader = easyocr.Reader(['en'], model_storage_directory=".")
         return reader
