@@ -4,5 +4,5 @@ Pillow==10.1.0
 pandas==2.1.1
 numpy==1.26.1
 PyMySQL==1.0.3
-streamlit-option-menu==0.7.1
+streamlit-option-menu==0.3.6
 requests==2.31.0
