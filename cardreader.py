@@ -72,7 +72,7 @@ def extracted_text(picture):
             small = result[m].lower()
             ext_dic['Email'].append(small)
 
-        elif 'www' in result[m] or 'WWW' in result[m] or 'wwW' in result[m]:
+        elif 'www.' in result[m] or 'WWW.' in result[m] or 'wwW.' in result[m]:
             small = result[m].lower()
             ext_dic['Website'].append(small)
 
