@@ -97,7 +97,7 @@ def extracted_text(picture):
     return ext_dic
 
 if selected == "Image":
-    image = st.file_uploader(label="Upload the image", type=['png', 'jpg', 'jpeg'], label_visibility="hidden")
+    image = st.file_uploader(label="Upload the image", type=['png', 'jpg', 'jpeg'],)
 
 
     @st.cache_data
